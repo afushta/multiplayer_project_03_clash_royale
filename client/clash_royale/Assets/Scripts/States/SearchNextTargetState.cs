@@ -9,11 +9,10 @@ public class SearchNextTargetState : CharacterState
 
     public override void Run()
     {
-        Unit target = UnitsCache.Instance.GetNearestUnit(_character.transform.position, _character.EnemiesOwner);
-        if (target)
+        if (_character.TryFindTarget(out Unit target))
         {
             _character.SetTarget(target);
-            _character.SetState(CharacterStates.Chase);
+            _character.SetState(CharacterStates.Move);
         }
     }
 }

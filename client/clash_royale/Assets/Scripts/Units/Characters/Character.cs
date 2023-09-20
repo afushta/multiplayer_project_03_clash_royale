@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 
 public class Character : Unit
 {
+    [field: SerializeField] public CharacterAnimationController AnimationController { get; private set; }
     [SerializeField] private CharacterState _defaultStateBase;
     [SerializeField] private CharacterState _chaseStateBase;
     [SerializeField] private CharacterState _attackStateBase;
@@ -14,7 +14,7 @@ public class Character : Unit
     private CharacterStates _currentStateName = CharacterStates.None;
 
     public Unit Target { get; private set; }
-    public float DistanceToTarget => Vector3.Distance(transform.position, Target.transform.position) - Target.Parameters.ModelRadius;
+    public float DistanceToTarget => Vector3.Distance(transform.position, Target.GetClosestPoint(transform.position)) - Target.Parameters.ModelRadius;
     public Owner EnemiesOwner { get; private set; }
 
     protected override void Awake()
@@ -32,13 +32,15 @@ public class Character : Unit
         SetState(CharacterStates.Default);
 
         EnemiesOwner = Owner == Owner.Player ? Owner.Enemy : Owner.Player;
+        
+        AnimationController.Init(this);
     }
 
     public void SetState(CharacterStates newState)
     {
         if (_currentStateName == newState) return;
 
-        if (_currentState) _currentState.OnExit();
+        _currentState?.OnExit();
 
         Debug.Log("Switch to state " + newState);
         switch (newState)
@@ -46,29 +48,45 @@ public class Character : Unit
             case CharacterStates.Default:
                 _currentState = _defaultState;
                 break;
-            case CharacterStates.Chase:
+            case CharacterStates.Move:
                 _currentState = _chaseState;
                 break;
             case CharacterStates.Attack:
                 _currentState = _attackState;
+                break;
+            case CharacterStates.Dead:
+                _currentState = null;
                 break;
             default:
                 Debug.LogError($"Unsupported state {newState}");
                 break;
         }
 
-        if (_currentState) _currentState.OnEnter();
+        _currentState?.OnEnter();
+        _currentStateName = newState;
+        AnimationController.SetState(_currentStateName);
     }
 
     private void Update()
     {
-        _currentState.Run();
+        _currentState?.Run();
     }
 
     public void SetTarget(Unit enemy)
     {
         Target = enemy;
     }
+    public bool TryFindTarget(out Unit target)
+    {
+        target = null;
+
+        foreach (AttackPriority priority in Parameters.AttackPriorities)
+        {
+            target = UnitsCache.Instance.GetNearestUnit(transform.position, EnemiesOwner, priority.Type, priority.Distance);
+            if (target) return true;
+        }
+        return false;
+    }
 }
 
-public enum CharacterStates { None, Default, Chase, Attack }
+public enum CharacterStates { None, Default, Move, Attack, Dead }

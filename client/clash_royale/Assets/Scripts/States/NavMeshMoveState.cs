@@ -45,12 +45,11 @@ public class NavMeshMoveState : CharacterState
 
     private void UpdateDestination()
     {
-        Unit target = UnitsCache.Instance.GetNearestUnit(_character.transform.position, _character.EnemiesOwner);
-        if (target != _character.Target)
+        if (_character.TryFindTarget(out Unit target) && target != _character.Target)
         {
             _character.SetTarget(target);
         }
 
-        _agent.SetDestination(_character.Target.transform.position);
+        _agent.SetDestination(_character.Target.GetClosestPoint(_character.transform.position));
     }
 }

@@ -36,7 +36,7 @@ public class UnitsCache : Manager<UnitsCache>
         }
     }
 
-    public Unit GetNearestUnit(Vector3 position, Owner unitOwner, float maxDistance = float.PositiveInfinity)
+    public Unit GetNearestUnit(Vector3 position, Owner unitOwner, UnitType type, float maxDistance = float.PositiveInfinity)
     {
         List<Unit> units = unitOwner == Owner.Enemy ? _enemyUnits : _playerUnits;
 
@@ -45,6 +45,7 @@ public class UnitsCache : Manager<UnitsCache>
         foreach (Unit enemy in units)
         {
             if (!enemy) continue;
+            if ((enemy.Parameters.UnitType & type) == UnitType.None) continue;
 
             float distance = Vector3.Distance(position, enemy.transform.position);
             if (distance < minDistance)

@@ -10,9 +10,15 @@ public class Healthbar : MonoBehaviour
     public void Init(int maxHealth)
     {
         _meshRenderer.material.SetFloat(SEGMENTS_COUNT_PARAM_NAME, maxHealth);
+        gameObject.SetActive(false);
     }
 
     private void LateUpdate()
+    {
+        ResetRotation();
+    }
+
+    private void ResetRotation()
     {
         transform.rotation = Quaternion.identity;
     }
@@ -20,6 +26,12 @@ public class Healthbar : MonoBehaviour
     public void UpdateValue(int current, int max)
     {
         float ratio = (float)current / max;
+        if (ratio < 1f)
+        {
+            gameObject.SetActive(true);
+            ResetRotation();
+        }
+
         _meshRenderer.material.SetFloat(FILL_RATIO_PARAM_NAME, ratio);
     }
 }
